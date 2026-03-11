@@ -21,6 +21,12 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
     private char direction = 'R'; // R=右 L=左 U=上 D=下
     private boolean running = false;
     private boolean gameOver = false;
+    private boolean choosingDifficulty = true;
+    private int difficulty = 0; // 0=未选择
+    private int speed = 160;
+    private int initialBodyParts = 2;
+    private int growAmount = 1;
+    private String difficultyName = "";
     private Timer timer;
     private final Random random = new Random();
 
@@ -29,14 +35,14 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
         setBackground(Color.BLACK);
         setFocusable(true);
         addKeyListener(this);
-        startGame();
     }
 
     private void startGame() {
-        bodyParts = 2;
+        bodyParts = initialBodyParts;
         score = 0;
         direction = 'R';
         gameOver = false;
+        choosingDifficulty = false;
 
         for (int i = 0; i < bodyParts; i++) {
             x[i] = 150 - i * TILE_SIZE;
@@ -48,8 +54,39 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
         running = true;
 
         if (timer != null) timer.stop();
-        timer = new Timer(160, this);
+        timer = new Timer(speed, this);
         timer.start();
+    }
+
+    private void setDifficulty(int level) {
+        switch (level) {
+            case 1: // 地狱
+                speed = 100;
+                initialBodyParts = 3;
+                growAmount = 2;
+                difficultyName = "地狱";
+                break;
+            case 2: // 困难
+                speed = 120;
+                initialBodyParts = 2;
+                growAmount = 1;
+                difficultyName = "困难";
+                break;
+            case 3: // 中等
+                speed = 160;
+                initialBodyParts = 2;
+                growAmount = 1;
+                difficultyName = "中等";
+                break;
+            case 4: // 简单
+                speed = 200;
+                initialBodyParts = 2;
+                growAmount = 1;
+                difficultyName = "简单";
+                break;
+        }
+        difficulty = level;
+        startGame();
     }
 
     private void spawnFood1() {
@@ -66,7 +103,46 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        if (running) {
+        if (choosingDifficulty) {
+            // 难度选择界面
+            g.setColor(new Color(0, 200, 0));
+            g.setFont(new Font("微软雅黑", Font.BOLD, 50));
+            String title = "贪 吃 蛇";
+            FontMetrics metrics = getFontMetrics(g.getFont());
+            g.drawString(title, (WIDTH - metrics.stringWidth(title)) / 2, 120);
+
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("微软雅黑", Font.BOLD, 24));
+            metrics = getFontMetrics(g.getFont());
+            String sub = "选择难度";
+            g.drawString(sub, (WIDTH - metrics.stringWidth(sub)) / 2, 180);
+
+            g.setFont(new Font("微软雅黑", Font.PLAIN, 22));
+            metrics = getFontMetrics(g.getFont());
+
+            g.setColor(new Color(255, 50, 50));
+            String d1 = "1 - 地狱  ";
+            g.drawString(d1, (WIDTH - metrics.stringWidth(d1)) / 2, 260);
+
+            g.setColor(new Color(255, 150, 50));
+            String d2 = "2 - 困难  ";
+            g.drawString(d2, (WIDTH - metrics.stringWidth(d2)) / 2, 310);
+
+            g.setColor(new Color(255, 255, 50));
+            String d3 = "3 - 中等  ";
+            g.drawString(d3, (WIDTH - metrics.stringWidth(d3)) / 2, 360);
+
+            g.setColor(new Color(50, 255, 50));
+            String d4 = "4 - 简单  ";
+            g.drawString(d4, (WIDTH - metrics.stringWidth(d4)) / 2, 410);
+
+            g.setColor(Color.GRAY);
+            g.setFont(new Font("微软雅黑", Font.PLAIN, 18));
+            metrics = getFontMetrics(g.getFont());
+            String hint = "按数字键 1-4 选择";
+            g.drawString(hint, (WIDTH - metrics.stringWidth(hint)) / 2, 480);
+
+        } else if (running) {
             // 画食物1（红色）
             g.setColor(Color.RED);
             g.fillOval(food1X, food1Y, TILE_SIZE, TILE_SIZE);
@@ -85,10 +161,10 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
                 g.fillRect(x[i], y[i], TILE_SIZE, TILE_SIZE);
             }
 
-            // 画分数
+            // 画分数和难度
             g.setColor(Color.WHITE);
             g.setFont(new Font("微软雅黑", Font.BOLD, 18));
-            g.drawString("分数: " + score, 10, 25);
+            g.drawString("分数: " + score + "  难度: " + difficultyName, 10, 25);
 
         } else if (gameOver) {
             // 游戏结束画面
@@ -105,7 +181,7 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
             g.drawString(scoreText, (WIDTH - metrics.stringWidth(scoreText)) / 2, HEIGHT / 2 + 20);
 
             g.setFont(new Font("微软雅黑", Font.PLAIN, 20));
-            String restartText = "按 空格键 重新开始";
+            String restartText = "空格键 重新开始 / ESC 选择难度";
             metrics = getFontMetrics(g.getFont());
             g.drawString(restartText, (WIDTH - metrics.stringWidth(restartText)) / 2, HEIGHT / 2 + 60);
         }
@@ -127,12 +203,12 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
 
     private void checkFood() {
         if (x[0] == food1X && y[0] == food1Y) {
-            bodyParts++;
+            bodyParts += growAmount;
             score++;
             spawnFood1();
         }
         if (x[0] == food2X && y[0] == food2Y) {
-            bodyParts++;
+            bodyParts += growAmount;
             score++;
             spawnFood2();
         }
@@ -170,7 +246,17 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        switch (e.getKeyCode()) {
+        int key = e.getKeyCode();
+
+        if (choosingDifficulty) {
+            if (key == KeyEvent.VK_1 || key == KeyEvent.VK_NUMPAD1) setDifficulty(1);
+            if (key == KeyEvent.VK_2 || key == KeyEvent.VK_NUMPAD2) setDifficulty(2);
+            if (key == KeyEvent.VK_3 || key == KeyEvent.VK_NUMPAD3) setDifficulty(3);
+            if (key == KeyEvent.VK_4 || key == KeyEvent.VK_NUMPAD4) setDifficulty(4);
+            return;
+        }
+
+        switch (key) {
             case KeyEvent.VK_UP:
                 if (direction != 'D') direction = 'U';
                 break;
@@ -185,6 +271,12 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
                 break;
             case KeyEvent.VK_SPACE:
                 if (gameOver) startGame();
+                break;
+            case KeyEvent.VK_ESCAPE:
+                if (gameOver) {
+                    choosingDifficulty = true;
+                    repaint();
+                }
                 break;
         }
     }
