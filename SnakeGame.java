@@ -14,7 +14,8 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
     private final int[] y = new int[TOTAL_TILES];
 
     private int bodyParts = 3;
-    private int foodX, foodY;
+    private int food1X, food1Y;
+    private int food2X, food2Y;
     private int score = 0;
 
     private char direction = 'R'; // R=右 L=左 U=上 D=下
@@ -32,7 +33,7 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
     }
 
     private void startGame() {
-        bodyParts = 3;
+        bodyParts = 2;
         score = 0;
         direction = 'R';
         gameOver = false;
@@ -42,17 +43,23 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
             y[i] = 150;
         }
 
-        spawnFood();
+        spawnFood1();
+        spawnFood2();
         running = true;
 
         if (timer != null) timer.stop();
-        timer = new Timer(120, this);
+        timer = new Timer(160, this);
         timer.start();
     }
 
-    private void spawnFood() {
-        foodX = random.nextInt(WIDTH / TILE_SIZE) * TILE_SIZE;
-        foodY = random.nextInt(HEIGHT / TILE_SIZE) * TILE_SIZE;
+    private void spawnFood1() {
+        food1X = random.nextInt(WIDTH / TILE_SIZE) * TILE_SIZE;
+        food1Y = random.nextInt(HEIGHT / TILE_SIZE) * TILE_SIZE;
+    }
+
+    private void spawnFood2() {
+        food2X = random.nextInt(WIDTH / TILE_SIZE) * TILE_SIZE;
+        food2Y = random.nextInt(HEIGHT / TILE_SIZE) * TILE_SIZE;
     }
 
     @Override
@@ -60,9 +67,13 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
         super.paintComponent(g);
 
         if (running) {
-            // 画食物
+            // 画食物1（红色）
             g.setColor(Color.RED);
-            g.fillOval(foodX, foodY, TILE_SIZE, TILE_SIZE);
+            g.fillOval(food1X, food1Y, TILE_SIZE, TILE_SIZE);
+
+            // 画食物2（橙色）
+            g.setColor(Color.ORANGE);
+            g.fillOval(food2X, food2Y, TILE_SIZE, TILE_SIZE);
 
             // 画蛇
             for (int i = 0; i < bodyParts; i++) {
@@ -115,10 +126,15 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
     }
 
     private void checkFood() {
-        if (x[0] == foodX && y[0] == foodY) {
+        if (x[0] == food1X && y[0] == food1Y) {
             bodyParts++;
             score++;
-            spawnFood();
+            spawnFood1();
+        }
+        if (x[0] == food2X && y[0] == food2Y) {
+            bodyParts++;
+            score++;
+            spawnFood2();
         }
     }
 
@@ -156,19 +172,15 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
     public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
             case KeyEvent.VK_UP:
-            case KeyEvent.VK_W:
                 if (direction != 'D') direction = 'U';
                 break;
             case KeyEvent.VK_DOWN:
-            case KeyEvent.VK_S:
                 if (direction != 'U') direction = 'D';
                 break;
             case KeyEvent.VK_LEFT:
-            case KeyEvent.VK_A:
                 if (direction != 'R') direction = 'L';
                 break;
             case KeyEvent.VK_RIGHT:
-            case KeyEvent.VK_D:
                 if (direction != 'L') direction = 'R';
                 break;
             case KeyEvent.VK_SPACE:
